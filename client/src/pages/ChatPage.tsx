@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import {
-  MessageCircle, Video, FileText, Phone, UserPlus, UserMinus, Star, Image as ImageIcon, Download, Lock
+  MessageCircle, Video, FileText, Phone, UserPlus, UserMinus, Star, Image as ImageIcon, Download, Lock, Menu
 } from 'lucide-react'
 
 function getAvatarUrl(name: string, avatar?: string) {
@@ -180,7 +180,16 @@ export default function ChatPage() {
             <MessageInput />
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center gradient-mesh">
+          <div className="flex-1 flex flex-col items-center justify-center gradient-mesh relative">
+            {/* Mobile hamburger — always visible when no room selected */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 left-4 z-10 w-10 h-10 rounded-xl md:hidden"
+              onClick={() => setShowSidebar(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
             <div className="text-center animate-scale-in">
               <div className="w-24 h-24 mx-auto mb-6 rounded-3xl gradient-primary flex items-center justify-center shadow-xl shadow-primary/30">
                 <MessageCircle className="w-12 h-12 text-primary-foreground" />
