@@ -110,9 +110,8 @@ if (env.NODE_ENV === 'production') {
   })
 }
 
-// Khởi động server
-async function start() {
-  await connectDB()
+// Khởi động server — listen trước, connect DB song song để healthcheck không timeout
+function start() {
   httpServer.listen(env.PORT, () => {
     console.log(`\n✓ ChatTime server đang chạy tại http://localhost:${env.PORT}`)
     console.log(`✓ Socket.io đang lắng nghe`)
@@ -120,6 +119,9 @@ async function start() {
       console.log(`✓ PeerJS server đang chạy (internal port ${PEER_PORT})`)
     }
     console.log(`✓ Môi trường: ${env.NODE_ENV}\n`)
+    connectDB().catch((err) => {
+      console.error('MongoDB connection failed:', err.message)
+    })
   })
 }
 

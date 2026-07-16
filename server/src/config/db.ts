@@ -7,7 +7,7 @@ export async function connectDB(): Promise<void> {
   const uri = process.env.MONGODB_URI
   if (!uri) {
     console.error('MONGODB_URI không được cấu hình trong .env')
-    process.exit(1)
+    return
   }
 
   for (let attempt = 1; attempt <= RETRY_COUNT; attempt++) {
