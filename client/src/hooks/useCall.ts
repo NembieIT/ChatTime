@@ -4,9 +4,9 @@ import { useCallStore } from '../stores/callStore'
 import { getSocket } from '../lib/socket'
 import type { CallType } from '../types'
 
-const PEER_SERVER_HOST = import.meta.env.DEV ? 'localhost' : window.location.hostname
+const PEER_SERVER_HOST = import.meta.env.DEV ? 'localhost' : '0.peerjs.com'
 const PEER_SERVER_PORT = import.meta.env.DEV ? 3001 : 443
-const PEER_SERVER_PATH = '/peerjs'
+const PEER_SERVER_PATH = '/'
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
