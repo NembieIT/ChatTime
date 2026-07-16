@@ -20,7 +20,15 @@ let storage: multer.StorageEngine
 const useCloudinary = !!env.CLOUDINARY_URL
 
 if (useCloudinary) {
+  const urlClean = env.CLOUDINARY_URL.replace(/^cloudinary:\/\//, '')
+  const atIndex = urlClean.lastIndexOf('@')
+  const [apiKey, apiSecret] = urlClean.substring(0, atIndex).split(':')
+  const cloudName = urlClean.substring(atIndex + 1)
+
   cloudinary.config({
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret,
     secure: true,
   })
   storage = new CloudinaryStorage({
@@ -32,7 +40,7 @@ if (useCloudinary) {
         `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     } as any,
   })
-  console.log('☁  Upload: using Cloudinary storage')
+  console.log('☁  Upload: using Cloudinary (cloud:', cloudName, ')')
 } else {
   const uploadDir = path.join(__dirname, '../../uploads')
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true })
