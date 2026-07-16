@@ -2,8 +2,7 @@ import express from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import cors from 'cors'
-import { PeerServer } from 'peer'
-import { createProxyMiddleware } from 'http-proxy-middleware'
+import { ExpressPeerServer } from 'peer'
 import { env } from './config/env'
 import { connectDB } from './config/db'
 import authRoutes from './routes/auth'
@@ -52,56 +51,24 @@ setIO(io)
 setupSocket(io)
 
 // ======== PEERJS ========
-// PeerJS chạy trên port nội bộ, Express proxy WebSocket ra ngoài
-// Client kết nối tới cùng origin (443) → Express → PeerJS (port nội bộ)
-
-const PEER_PORT = env.PEER_PORT
-
-// Proxy /peerjs WebSocket → internal PeerJS server
-const peerProxy = createProxyMiddleware({
-  target: `http://localhost:${PEER_PORT}`,
-  ws: true,
-  changeOrigin: true,
+// Gắn PeerJS vào server chính, KHÔNG tạo port riêng
+// Tránh Railway detect nhầm port → "Cannot GET /"
+const peerServer = ExpressPeerServer(httpServer, {
+  path: '/peerjs',
+  allow_discovery: false,
 })
 
-app.use('/peerjs', peerProxy as any)
-
-// Handle WebSocket upgrade for PeerJS proxy
-httpServer.on('upgrade', (req, socket, head) => {
-  if (req.url?.startsWith('/peerjs')) {
-    peerProxy.upgrade(req, socket as any, head)
-  }
+peerServer.on('connection', (client) => {
+  console.log(`✓ PeerJS client connected: ${client.getId()}`)
 })
 
-// PeerJS Server nội bộ — không expose ra ngoài
-let peerServer: ReturnType<typeof PeerServer> | null = null
-try {
-  peerServer = PeerServer({
-    port: PEER_PORT,
-    path: '/peerjs',
-    allow_discovery: false,
-  })
+peerServer.on('disconnect', (client) => {
+  console.log(`✓ PeerJS client disconnected: ${client.getId()}`)
+})
 
-  peerServer.on('error', (err: Error) => {
-    console.warn(`⚠ PeerJS server error on port ${PEER_PORT}: ${err.message}`)
-    if ((err as any).code === 'EADDRINUSE') {
-      console.warn('  Port', PEER_PORT, 'is in use. Voice/video calls may not work.')
-      console.warn('  Kill the old process and restart.')
-    }
-  })
+app.use('/peerjs', peerServer)
 
-  peerServer.on('connection', (client) => {
-    console.log(`✓ PeerJS client connected: ${client.getId()}`)
-  })
-
-  peerServer.on('disconnect', (client) => {
-    console.log(`✓ PeerJS client disconnected: ${client.getId()}`)
-  })
-} catch (err) {
-  console.warn(`⚠ PeerJS server failed on port ${PEER_PORT}:`, (err as Error).message)
-}
-
-// Trong production: phục vụ React build + SPA fallback (sau proxy PeerJS)
+// Trong production: phục vụ React build + SPA fallback
 const clientDist = path.join(__dirname, '../../client/dist')
 if (env.NODE_ENV === 'production') {
   app.use(express.static(clientDist))
@@ -110,14 +77,12 @@ if (env.NODE_ENV === 'production') {
   })
 }
 
-// Khởi động server — listen trước, connect DB song song để healthcheck không timeout
+// Khởi động server
 function start() {
   httpServer.listen(env.PORT, () => {
     console.log(`\n✓ ChatTime server đang chạy tại http://localhost:${env.PORT}`)
     console.log(`✓ Socket.io đang lắng nghe`)
-    if (peerServer) {
-      console.log(`✓ PeerJS server đang chạy (internal port ${PEER_PORT})`)
-    }
+    console.log(`✓ PeerJS server đang chạy tại /peerjs`)
     console.log(`✓ Môi trường: ${env.NODE_ENV}\n`)
     connectDB().catch((err) => {
       console.error('MongoDB connection failed:', err.message)
