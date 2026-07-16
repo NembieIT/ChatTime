@@ -95,13 +95,13 @@ export default function ActiveCallView() {
           </div>
         )}
 
-        {/* FIX: Hidden audio element for audio-only calls (so remote audio plays) */}
+        {/* Hidden audio element for audio-only calls (so remote audio plays) */}
         {remoteStream && (
           <audio
             ref={remoteAudioRef}
             autoPlay
             playsInline
-            className="hidden"
+            style={{ position: 'absolute', width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
           />
         )}
 

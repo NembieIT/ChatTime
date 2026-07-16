@@ -39,8 +39,11 @@ app.use('/api/rooms', messageRoutes)
 app.use('/api/upload', uploadRoutes)
 app.use('/api/friends', friendRoutes)
 
-// Static files
+// Static files — return 404 JSON nếu file không tồn tại (không SPA fallback)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')))
+app.use('/uploads', (_req, res) => {
+  res.status(404).json({ message: 'File not found' })
+})
 
 // Socket.io
 const io = new Server(httpServer, {
@@ -57,6 +60,12 @@ if (env.NODE_ENV === 'production') {
     res.sendFile(path.join(clientDist, 'index.html'))
   })
 }
+
+// Global error handler — always return JSON, never HTML
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('Unhandled error:', err.message)
+  res.status(err.status || 500).json({ message: err.message || 'Internal server error' })
+})
 
 function start() {
   httpServer.listen(env.PORT, () => {
