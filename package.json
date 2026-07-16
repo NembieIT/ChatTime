@@ -5,7 +5,7 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "cd client && npm install && npm run build && cd ../server && npm install && npm run build",
+    "build": "cd client && npm install --include=dev && npm run build && cd ../server && npm install --include=dev && npm run build",
     "start": "cd server && node dist/index.js",
     "dev": "cd server && npm run dev"
   }
